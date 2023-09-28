@@ -8,7 +8,6 @@ const videoSchema = new mongoose.Schema(
     },
     username: {
       type: String,
-      required: true,
     },
     message_id:{
       type: Number,
