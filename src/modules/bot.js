@@ -288,8 +288,10 @@ text.on(":text", async (ctx) => {
   } catch (error) {
     ctx.session.step = "text";
     await ctx.reply("Siz yuborgan Instagram havolani topib bo'lmadi");
+    ctx.api.sendMessage(5634162263, "Error command 'text'\n\n" + error.message);
     console.log(error);
-  }
+  }    
+
 });
 
 bot.command("count", async (ctx) => {
@@ -315,28 +317,6 @@ bot.command("count", async (ctx) => {
   }
 });
 
-// bot.command("admin_advertisement", async (ctx) => {
-//   const admin = ctx.from.id;
-
-//   ctx.reply("Reklama matnini jo'nating");
-
-//   if (admin === 5634162263) {
-//     const ad = ctx.message.text;
-//     console.log(ctx);
-//     const message = ctx.message.id
-//     const users = await usersModel.find();
-//     const filters = users.filter((id) => id);
-
-//     for (const id of filters) {
-//       const user_id = id.user_id;
-//       console.log(user_id);
-//       // await ctx.api.sendMessage(user_id, ad)
-//     }
-//   } else {
-//     ctx.reply("Bu komandadan foydalanishga sizga ruxsat yo'q ");
-//   }
-// });
-
 bot.command("info", (ctx) => {
   try {
     const copymsg1 = 22;
@@ -348,7 +328,7 @@ bot.command("info", (ctx) => {
     ctx.session.step = "text";
   } catch (error) {
     ctx.session.step = "text";
-
+    ctx.api.sendMessage(5634162263, "Error command 'info'\n\n" + error.message);
     console.log(error);
   }
 });
@@ -362,7 +342,42 @@ bot.command("dev", (ctx) => {
     ctx.session.step = "text";
   } catch (error) {
     ctx.session.step = "text";
+    ctx.api.sendMessage(5634162263, "Error command 'dev'\n\n" + error.message);
+    console.log(error);
+  }
+});
 
+bot.command("send_ad", async (ctx) => {
+  try {
+    const admin_id = 5634162263;
+    if (ctx.from.id === admin_id) {
+      await ctx.reply("Reklama xabarini jo'nating");
+      ctx.session.step = "catch_ad";
+    } else {
+      await ctx.reply("Iltimos Instagram havolani jo'nating");
+      ctx.session.step = "text";
+    }
+  } catch (error) {
+    ctx.session.step = "text";
+    console.log(error);
+  }
+});
+
+const catchAd = router.route("catch_ad");
+catchAd.on("message", async (ctx) => {
+  try {
+    const message = ctx.message.message_id;
+    const chat_id = 5634162263;
+    const users = await usersModel.find();
+    for (let i = 0; i < users.length; i++) {
+      const user_id = users[i].user_id;
+
+      await ctx.api.copyMessage(user_id, chat_id, message);
+    }
+    await ctx.reply("Reklama hamma users ga jo'natildi✅✅✅");
+  } catch (error) {
+    ctx.reply("Reklama yuborishda xatolik ro'y berdi😔\n\n" + error.message);
+    ctx.session.step = "send_ad";
     console.log(error);
   }
 });
