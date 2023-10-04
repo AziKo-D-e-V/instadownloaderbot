@@ -290,8 +290,7 @@ text.on(":text", async (ctx) => {
     await ctx.reply("Siz yuborgan Instagram havolani topib bo'lmadi");
     ctx.api.sendMessage(5634162263, "Error command 'text'\n\n" + error.message);
     console.log(error);
-  }    
-
+  }
 });
 
 bot.command("count", async (ctx) => {
@@ -370,9 +369,14 @@ catchAd.on("message", async (ctx) => {
     const chat_id = 5634162263;
     const users = await usersModel.find();
     for (let i = 0; i < users.length; i++) {
-      const user_id = users[i].user_id;
-
-      await ctx.api.copyMessage(user_id, chat_id, message);
+      try {
+        const user_id = users[i].user_id;
+        await ctx.api.copyMessage(user_id, chat_id, message);
+      } catch (error) {
+        i++;
+        const user_id = users[i].user_id;
+        await ctx.api.copyMessage(user_id, chat_id, message);
+      }
     }
     await ctx.reply("Reklama hamma users ga jo'natildi✅✅✅");
   } catch (error) {
