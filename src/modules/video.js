@@ -7,9 +7,9 @@ const reelsController = (url, type) => {
       url: `https://instagram-media-downloader.p.rapidapi.com/rapid/${type}.php`,
       qs: { url },
       headers: {
-        'X-RapidAPI-Key': '7e5652e7acmsh4c9af6f1bce5b7dp18922ejsnf86ff631a422',
-        'X-RapidAPI-Host': 'instagram-media-downloader.p.rapidapi.com'
-      }
+        "X-RapidAPI-Key": "f8fbf89550mshea561890093b7dcp1994a5jsn1950b457f4cb",
+        "X-RapidAPI-Host": "instagram-media-downloader.p.rapidapi.com",
+      },
     };
 
     request(options, function (error, response, body) {
