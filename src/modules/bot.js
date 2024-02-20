@@ -52,7 +52,7 @@ bot.command("start", async (ctx) => {
 });
 
 const text = router.route("text");
-text.on(":text", async (ctx) => {
+text.on("message::url", async (ctx) => {
   try {
     const text = ctx.message.text;
     const username = ctx.from?.username || "";

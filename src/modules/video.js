@@ -1,4 +1,5 @@
 const request = require("request");
+const config = require("../config");
 
 const reelsController = (url, type) => {
   return new Promise((resolve, reject) => {
@@ -7,7 +8,7 @@ const reelsController = (url, type) => {
       url: `https://instagram-media-downloader.p.rapidapi.com/rapid/${type}.php`,
       qs: { url },
       headers: {
-        "X-RapidAPI-Key": "f8fbf89550mshea561890093b7dcp1994a5jsn1950b457f4cb",
+        "X-RapidAPI-Key": config.KEY,
         "X-RapidAPI-Host": "instagram-media-downloader.p.rapidapi.com",
       },
     };
