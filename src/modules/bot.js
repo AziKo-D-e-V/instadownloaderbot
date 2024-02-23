@@ -4,11 +4,11 @@ const usersModel = require("../models/users.model");
 const reelsController = require("./video");
 const videoModel = require("../models/video.model");
 const bot = require("../helper/commands");
+const tiktokVideo = require("./tiktok.video");
 
 const channelUlr = "@azyutubot";
 const from_chat_id = "@adsgasdh";
-const captions =
-  "@insta_chopbot Instagramdagi videolarni bot orqali chopamiz...😜😉";
+const captions = "@insta_chopbot Videolarni bot orqali chopamiz...😜😉";
 bot.command("start", async (ctx) => {
   try {
     const first_name = ctx.from?.first_name || "";
@@ -59,6 +59,8 @@ text.on("message::url", async (ctx) => {
     const user_id = ctx.from.id;
     const chat_id = ctx.chat.id;
     const isInsta = text.split("/")[2];
+    const isTikTok = text.split("/")[2];
+
     if (isInsta === "www.instagram.com" || isInsta === "instagram.com") {
       const isReels = text.split("/")[3];
 
@@ -281,13 +283,74 @@ text.on("message::url", async (ctx) => {
         }
         ctx.session.step = "text";
       }
-    } else {
-      await ctx.reply("Iltimos Instagram havolani jo'nating");
-      ctx.session.step = "text";
+    } else if (isTikTok == "www.tiktok.com" || isTikTok == "vt.tiktok.com") {
+      const typingMessage = await ctx.reply("⏳");
+
+      const message_id = typingMessage.message_id;
+
+      await ctx.api.deleteMessage(chat_id, message_id - 1);
+
+      const findVideo = await videoModel.findOne({ video_url: text });
+      if (findVideo) {
+        try {
+          const copymsg = findVideo.message_id;
+
+          const video = await ctx.api.copyMessage(
+            chat_id,
+            from_chat_id,
+            copymsg,
+            {
+              caption: captions,
+            }
+          );
+
+          await ctx.api.deleteMessage(chat_id, video.message_id - 1);
+          ctx.session.step = "text";
+        } catch (error) {
+          await ctx.reply("Siz yuborgan TikTok havolani topib bo'lmadi😔😔😔");
+        }
+      } else {
+        const data = await tiktokVideo(text);
+        
+        if (data.data.message) {
+          const frm = -1001926273739;
+
+          ctx.api.sendMessage(frm, data.data.message);
+        } else {
+          const url = data.data.hdplay || data.data.wmplay || data.data.play;
+
+          if (!url) {
+            await ctx.reply("Siz yuborgan Instagram havolani topib bo'lmadi");
+            ctx.session.step = "text";
+          }
+          try {
+            const videoSend = ctx.replyWithVideo(url, {
+              caption: captions,
+            });
+
+            await ctx.api.deleteMessage(chat_id, message_id);
+
+            const sendVid = await ctx.api.sendVideo(from_chat_id, url);
+
+            const saveDb = await videoModel.create({
+              username,
+              user_id,
+              video_url: text,
+              message_id: sendVid.message_id,
+            });
+            ctx.session.step = "text";
+          } catch (error) {
+            ctx.api.sendMessage(
+              5634162263,
+              "Error command 'text'\n\n" + error.message
+            );
+          }
+        }
+      }
     }
   } catch (error) {
     ctx.session.step = "text";
-    await ctx.reply("Siz yuborgan Instagram havolani topib bo'lmadi");
+    await ctx.reply("Siz yuborgan havolani topib bo'lmadi");
     ctx.api.sendMessage(5634162263, "Error command 'text'\n\n" + error.message);
     console.log(error);
   }
