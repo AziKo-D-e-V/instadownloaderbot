@@ -18,7 +18,7 @@ bot.command("start", async (ctx) => {
     await ctx.reply(
       `Assalom aleykum  <b>${
         first_name || last_name
-      }</b>👋 \n\nMenga <b> Instagram  havola(ssilka)</b>ni🔗  yuboring`,
+      }</b>👋 \n\nMenga <b> Instagram yok Tik Tok  havola(ssilka)</b>ni🔗  yuboring`,
       {
         reply_markup: {
           remove_keyboard: true,
@@ -311,7 +311,7 @@ text.on("message::url", async (ctx) => {
         }
       } else {
         const data = await tiktokVideo(text);
-        
+
         if (data.data.message) {
           const frm = -1001926273739;
 
