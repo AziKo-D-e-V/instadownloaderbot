@@ -1,3 +1,5 @@
+const { get } = require("https");
+const fs = require("fs");
 const { Router } = require("@grammyjs/router");
 const router = new Router((ctx) => ctx.session.step);
 const usersModel = require("../models/users.model");
@@ -5,6 +7,10 @@ const reelsController = require("./video");
 const videoModel = require("../models/video.model");
 const bot = require("../helper/commands");
 const tiktokVideo = require("./tiktok.video");
+const request = require("request");
+const config = require("../config");
+const path = require("path");
+const { InputFile } = require("grammy");
 
 const channelUlr = "@azyutubot";
 const from_chat_id = "@adsgasdh";
@@ -24,6 +30,7 @@ bot.command("start", async (ctx) => {
           remove_keyboard: true,
         },
         parse_mode: "HTML",
+        reply_to_message_id: ctx.message.message_id,
       }
     );
 
@@ -65,9 +72,12 @@ text.on("message::url", async (ctx) => {
       const isReels = text.split("/")[3];
 
       if (isReels === "reel") {
-        const typingMessage = await ctx.reply("⏳");
-        const message_id = typingMessage.message_id;
-        await ctx.api.deleteMessage(chat_id, message_id - 1);
+        const typingMessage = await ctx.reply("⏳", {
+          reply_to_message_id: ctx.message.message_id,
+        });
+
+        // const message_id = typingMessage.message_id;
+        // await ctx.api.deleteMessage(chat_id, message_id - 1);
 
         const findVideo = await videoModel.findOne({ video_url: text });
         if (findVideo) {
@@ -91,14 +101,18 @@ text.on("message::url", async (ctx) => {
             if (data.message) {
               const frm = -1001926273739;
               await ctx.reply(
-                "Siz yuborgan Instagram havolani topib bo'lmadi😔😔😔"
+                "Siz yuborgan Instagram havolani topib bo'lmadi😔😔😔",
+                {
+                  reply_to_message_id: ctx.message.message_id,
+                }
               );
               ctx.api.sendMessage(frm, data.message);
             } else {
               const url = data.items["0"].video_versions[0].url;
 
-              const videoSend = ctx.replyWithVideo(url, {
+              const videoSend = await ctx.replyWithVideo(url, {
                 caption: captions,
+                reply_to_message_id: ctx.message.message_id,
               });
 
               await ctx.api.deleteMessage(chat_id, message_id);
@@ -121,7 +135,10 @@ text.on("message::url", async (ctx) => {
           if (data.message) {
             const frm = -1001926273739;
             await ctx.reply(
-              "Siz yuborgan Instagram havolani topib bo'lmadi😔😔😔"
+              "Siz yuborgan Instagram havolani topib bo'lmadi😔😔😔",
+              {
+                reply_to_message_id: ctx.message.message_id,
+              }
             );
             ctx.api.sendMessage(frm, data.message);
           } else {
@@ -129,6 +146,7 @@ text.on("message::url", async (ctx) => {
 
             const videoSend = await ctx.replyWithVideo(url, {
               caption: captions,
+              reply_to_message_id: ctx.message.message_id,
             });
 
             await ctx.api.deleteMessage(chat_id, message_id);
@@ -144,10 +162,12 @@ text.on("message::url", async (ctx) => {
           ctx.session.step = "text";
         }
       } else if (isReels === "stories") {
-        const typingMessage = await ctx.reply("⏳");
+        const typingMessage = await ctx.reply("⏳", {
+          reply_to_message_id: ctx.message.message_id,
+        });
         const message_id = typingMessage.message_id;
 
-        await ctx.api.deleteMessage(chat_id, message_id - 1);
+        // await ctx.api.deleteMessage(chat_id, message_id - 1);
 
         const findStory = await videoModel.findOne({ video_url: text });
 
@@ -171,7 +191,10 @@ text.on("message::url", async (ctx) => {
           if (data.message) {
             const frm = -1001926273739;
             await ctx.reply(
-              "Siz yuborgan Instagram havolani topib bo'lmadi😔😔😔"
+              "Siz yuborgan Instagram havolani topib bo'lmadi😔😔😔",
+              {
+                reply_to_message_id: ctx.message.message_id,
+              }
             );
             ctx.api.sendMessage(frm, data.message);
           } else {
@@ -179,13 +202,17 @@ text.on("message::url", async (ctx) => {
             if (data.video == undefined) {
               await ctx.api.deleteMessage(chat_id, message_id);
               ctx.reply(
-                `Bot private story larni yuklay olmaydi❗\nStory ni private emasligiga ishonch hosil qiling...❗`
+                `Bot private story larni yuklay olmaydi❗\nStory ni private emasligiga ishonch hosil qiling...❗`,
+                {
+                  reply_to_message_id: ctx.message.message_id,
+                }
               );
             } else {
               await ctx.api.deleteMessage(chat_id, message_id);
 
-              ctx.replyWithVideo(url, {
+              await ctx.replyWithVideo(url, {
                 caption: captions,
+                reply_to_message_id: ctx.message.message_id,
               });
 
               const sendVid = await ctx.api.sendVideo(from_chat_id, url);
@@ -200,10 +227,12 @@ text.on("message::url", async (ctx) => {
           }
         }
       } else if (isReels === "p") {
-        const typingMessage = await ctx.reply("⏳");
+        const typingMessage = await ctx.reply("⏳", {
+          reply_to_message_id: ctx.message.message_id,
+        });
         const message_id = typingMessage.message_id;
 
-        await ctx.api.deleteMessage(chat_id, message_id - 1);
+        // await ctx.api.deleteMessage(chat_id, message_id - 1);
         const findMedia = await videoModel.find({ video_url: text });
 
         if (findMedia.length > 0) {
@@ -229,7 +258,10 @@ text.on("message::url", async (ctx) => {
         if (data.message) {
           const frm = -1001926273739;
           await ctx.reply(
-            "Siz yuborgan Instagram havolani topib bo'lmadi😔😔😔"
+            "Siz yuborgan Instagram havolani topib bo'lmadi😔😔😔",
+            {
+              reply_to_message_id: ctx.message.message_id,
+            }
           );
           ctx.api.sendMessage(frm, data.message);
         } else {
@@ -256,6 +288,7 @@ text.on("message::url", async (ctx) => {
             if (media.type === "video") {
               await ctx.replyWithVideo(url, {
                 caption: captions,
+                reply_to_message_id: ctx.message.message_id,
               });
 
               const sendVid = await ctx.api.sendVideo(from_chat_id, url);
@@ -284,11 +317,13 @@ text.on("message::url", async (ctx) => {
         ctx.session.step = "text";
       }
     } else if (isTikTok == "www.tiktok.com" || isTikTok == "vt.tiktok.com") {
-      const typingMessage = await ctx.reply("⏳");
+      const typingMessage = await ctx.reply("⏳", {
+        reply_to_message_id: ctx.message.message_id,
+      });
 
       const message_id = typingMessage.message_id;
 
-      await ctx.api.deleteMessage(chat_id, message_id - 1);
+      // await ctx.api.deleteMessage(chat_id, message_id - 1);
 
       const findVideo = await videoModel.findOne({ video_url: text });
       if (findVideo) {
@@ -307,7 +342,9 @@ text.on("message::url", async (ctx) => {
           await ctx.api.deleteMessage(chat_id, video.message_id - 1);
           ctx.session.step = "text";
         } catch (error) {
-          await ctx.reply("Siz yuborgan TikTok havolani topib bo'lmadi😔😔😔");
+          await ctx.reply("Siz yuborgan TikTok havolani topib bo'lmadi😔😔😔", {
+            reply_to_message_id: ctx.message.message_id,
+          });
         }
       } else {
         const data = await tiktokVideo(text);
@@ -320,11 +357,345 @@ text.on("message::url", async (ctx) => {
           const url = data.data.hdplay || data.data.wmplay || data.data.play;
 
           if (!url) {
-            await ctx.reply("Siz yuborgan Instagram havolani topib bo'lmadi");
+            await ctx.reply("Siz yuborgan Instagram havolani topib bo'lmadi", {
+              reply_to_message_id: ctx.message.message_id,
+            });
+            ctx.session.step = "text";
+          }
+          try {
+            const videoSend = await ctx.replyWithVideo(url, {
+              caption: captions,
+              reply_to_message_id: ctx.message.message_id,
+            });
+
+            await ctx.api.deleteMessage(chat_id, message_id);
+
+            const sendVid = await ctx.api.sendVideo(from_chat_id, url);
+
+            const saveDb = await videoModel.create({
+              username,
+              user_id,
+              video_url: text,
+              message_id: sendVid.message_id,
+            });
+            ctx.session.step = "text";
+          } catch (error) {
+            ctx.api.sendMessage(
+              5634162263,
+              "Error command 'text'\n\n" + error.message
+            );
+          }
+        }
+      }
+    }
+  } catch (error) {
+    ctx.session.step = "text";
+    await ctx.reply("Siz yuborgan havolani topib bo'lmadi", {
+      reply_to_message_id: ctx.message.message_id,
+    });
+    ctx.api.sendMessage(5634162263, "Error command 'text'\n\n" + error.message);
+    console.log(error);
+  }
+});
+
+bot.on("message::url", async (ctx) => {
+  try {
+    const text = ctx.message.text;
+    const username = ctx.from?.username || "";
+    const user_id = ctx.from.id;
+    const chat_id = ctx.chat.id;
+    const isInsta = text.split("/")[2];
+    const isTikTok = text.split("/")[2];
+
+    if (isInsta === "www.instagram.com" || isInsta === "instagram.com") {
+      const isReels = text.split("/")[3];
+
+      if (isReels === "reel") {
+        const typingMessage = await ctx.reply("⏳");
+        const message_id = typingMessage.message_id;
+        // await ctx.api.deleteMessage(chat_id, message_id - 1);
+
+        const findVideo = await videoModel.findOne({ video_url: text });
+        if (findVideo) {
+          try {
+            const copymsg = findVideo.message_id;
+
+            const video = await ctx.api.copyMessage(
+              chat_id,
+              from_chat_id,
+              copymsg,
+              {
+                caption: captions,
+              }
+            );
+
+            await ctx.api.deleteMessage(chat_id, video.message_id - 1);
+
+            ctx.session.step = "text";
+          } catch (error) {
+            const data = await reelsController(text, "post_v2");
+            if (data.message) {
+              const frm = -1001926273739;
+              await ctx.reply(
+                "Siz yuborgan Instagram havolani topib bo'lmadi😔😔😔",
+                {
+                  reply_to_message_id: ctx.message.message_id,
+                }
+              );
+              ctx.api.sendMessage(frm, data.message);
+            } else {
+              const url = data.items["0"].video_versions[0].url;
+
+              const videoSend = await ctx.replyWithVideo(url, {
+                caption: captions,
+                reply_to_message_id: ctx.message.message_id,
+              });
+
+              await ctx.api.deleteMessage(chat_id, message_id);
+
+              const sendVid = await ctx.api.sendVideo(from_chat_id, url);
+
+              const saveDb = await videoModel.create({
+                username,
+                user_id,
+                video_url: text,
+                message_id: sendVid.message_id,
+              });
+            }
+            ctx.session.step = "text";
+            console.log(error);
+          }
+        } else {
+          const data = await reelsController(text, "post_v2");
+
+          if (data.message) {
+            const frm = -1001926273739;
+            await ctx.reply(
+              "Siz yuborgan Instagram havolani topib bo'lmadi😔😔😔",
+              {
+                reply_to_message_id: ctx.message.message_id,
+              }
+            );
+            ctx.api.sendMessage(frm, data.message);
+          } else {
+            const url = data.items["0"].video_versions[0].url;
+
+            const videoSend = await ctx.replyWithVideo(url, {
+              caption: captions,
+              reply_to_message_id: ctx.message.message_id,
+            });
+
+            await ctx.api.deleteMessage(chat_id, message_id);
+            const sendVid = await ctx.api.sendVideo(from_chat_id, url);
+            const saveDb = await videoModel.create({
+              username,
+              user_id,
+              video_url: text,
+              message_id: sendVid.message_id,
+            });
+          }
+
+          ctx.session.step = "text";
+        }
+      } else if (isReels === "stories") {
+        const typingMessage = await ctx.reply("⏳");
+        const message_id = typingMessage.message_id;
+
+        // await ctx.api.deleteMessage(chat_id, message_id - 1);
+
+        const findStory = await videoModel.findOne({ video_url: text });
+
+        if (findStory) {
+          const copymsg = findStory.message_id;
+
+          const video = await ctx.api.copyMessage(
+            chat_id,
+            from_chat_id,
+            copymsg,
+            {
+              caption: captions,
+            }
+          );
+
+          await ctx.api.deleteMessage(chat_id, video.message_id - 1);
+
+          ctx.session.step = "text";
+        } else {
+          const data = await reelsController(text, "stories");
+          if (data.message) {
+            const frm = -1001926273739;
+            await ctx.reply(
+              "Siz yuborgan Instagram havolani topib bo'lmadi😔😔😔",
+              {
+                reply_to_message_id: ctx.message.message_id,
+              }
+            );
+            ctx.api.sendMessage(frm, data.message);
+          } else {
+            const url = data.video;
+            if (data.video == undefined) {
+              await ctx.api.deleteMessage(chat_id, message_id);
+              ctx.reply(
+                `Bot private story larni yuklay olmaydi❗\nStory ni private emasligiga ishonch hosil qiling...❗`,
+                {
+                  reply_to_message_id: ctx.message.message_id,
+                }
+              );
+            } else {
+              await ctx.api.deleteMessage(chat_id, message_id);
+
+              ctx.replyWithVideo(url, {
+                caption: captions,
+                reply_to_message_id: ctx.message.message_id,
+              });
+
+              const sendVid = await ctx.api.sendVideo(from_chat_id, url);
+              const saveDb = await videoModel.create({
+                username,
+                user_id,
+                video_url: text,
+                message_id: sendVid.message_id,
+              });
+            }
+            ctx.session.step = "text";
+          }
+        }
+      } else if (isReels === "p") {
+        const typingMessage = await ctx.reply("⏳");
+        const message_id = typingMessage.message_id;
+
+        // await ctx.api.deleteMessage(chat_id, message_id - 1);
+        const findMedia = await videoModel.find({ video_url: text });
+
+        if (findMedia.length > 0) {
+          const copymsg = findMedia.filter((id) => id);
+          for (const id of findMedia) {
+            const video = await ctx.api.copyMessage(
+              chat_id,
+              from_chat_id,
+              id.message_id,
+              {
+                caption: captions,
+              }
+            );
+          }
+
+          await ctx.api.deleteMessage(chat_id, ctx.message.message_id + 1);
+
+          ctx.session.step = "text";
+        }
+
+        const data = await reelsController(text, "post");
+
+        if (data.message) {
+          const frm = -1001926273739;
+          await ctx.reply(
+            "Siz yuborgan Instagram havolani topib bo'lmadi😔😔😔",
+            {
+              reply_to_message_id: ctx.message.message_id,
+            }
+          );
+          ctx.api.sendMessage(frm, data.message);
+        } else {
+          const urls = [
+            data?.["0"],
+            data?.["1"],
+            data?.["2"],
+            data?.["3"],
+            data?.["4"],
+            data?.["5"],
+            data?.["6"],
+            data?.["7"],
+            data?.["8"],
+            data?.["9"],
+            data?.["10"],
+          ];
+          const validUrls = urls.filter((url) => url);
+
+          for (const url of validUrls) {
+            const media = {
+              type: url.split("?")[0].endsWith(".mp4") ? "video" : "photo",
+              media: url,
+            };
+            if (media.type === "video") {
+              await ctx.replyWithVideo(url, {
+                caption: captions,
+                reply_to_message_id: ctx.message.message_id,
+              });
+
+              const sendVid = await ctx.api.sendVideo(from_chat_id, url);
+              const saveDb = await videoModel.create({
+                username,
+                user_id,
+                video_url: text,
+                message_id: sendVid.message_id,
+              });
+            } else {
+              await ctx.replyWithPhoto(url, {
+                caption: captions,
+                reply_to_message_id: ctx.message.message_id,
+              });
+
+              const sendVid = await ctx.api.sendPhoto(from_chat_id, url);
+              const saveDb = await videoModel.create({
+                username,
+                user_id,
+                video_url: text,
+                message_id: sendVid.message_id,
+              });
+            }
+          }
+          await ctx.api.deleteMessage(chat_id, message_id);
+        }
+        ctx.session.step = "text";
+      }
+    } else if (isTikTok == "www.tiktok.com" || isTikTok == "vt.tiktok.com") {
+      const typingMessage = await ctx.reply("⏳");
+
+      const message_id = typingMessage.message_id;
+
+      // await ctx.api.deleteMessage(chat_id, message_id - 1);
+
+      const findVideo = await videoModel.findOne({ video_url: text });
+      if (findVideo) {
+        try {
+          const copymsg = findVideo.message_id;
+
+          const video = await ctx.api.copyMessage(
+            chat_id,
+            from_chat_id,
+            copymsg,
+            {
+              caption: captions,
+            }
+          );
+
+          await ctx.api.deleteMessage(chat_id, video.message_id - 1);
+          ctx.session.step = "text";
+        } catch (error) {
+          await ctx.reply("Siz yuborgan TikTok havolani topib bo'lmadi😔😔😔", {
+            reply_to_message_id: ctx.message.message_id,
+          });
+        }
+      } else {
+        const data = await tiktokVideo(text);
+
+        if (data.data.message) {
+          const frm = -1001926273739;
+
+          ctx.api.sendMessage(frm, data.data.message);
+        } else {
+          const url = data.data.hdplay || data.data.wmplay || data.data.play;
+
+          if (!url) {
+            await ctx.reply("Siz yuborgan Instagram havolani topib bo'lmadi", {
+              reply_to_message_id: ctx.message.message_id,
+            });
             ctx.session.step = "text";
           }
           try {
             const videoSend = ctx.replyWithVideo(url, {
+              reply_to_message_id: ctx.message.message_id,
               caption: captions,
             });
 
@@ -350,12 +721,13 @@ text.on("message::url", async (ctx) => {
     }
   } catch (error) {
     ctx.session.step = "text";
-    await ctx.reply("Siz yuborgan havolani topib bo'lmadi");
+    await ctx.reply("Siz yuborgan havolani topib bo'lmadi", {
+      reply_to_message_id: ctx.message.message_id,
+    });
     ctx.api.sendMessage(5634162263, "Error command 'text'\n\n" + error.message);
     console.log(error);
   }
 });
-
 bot.command("count", async (ctx) => {
   try {
     const chatId = ctx.chat.id;
@@ -447,6 +819,34 @@ catchAd.on("message", async (ctx) => {
     ctx.session.step = "send_ad";
     console.log(error);
   }
+});
+
+function generateUUID() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    var r = (Math.random() * 16) | 0,
+      v = c == "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+// async function createVideosFolder() {
+//   const folderPath = process.cwd() + "/src/videos";
+
+//   try {
+//     await fs.mkdir(folderPath);
+//     console.log("Videos folder created successfully.");
+//   } catch (err) {
+//     if (err.code !== "EXIST") {
+//       // Ignore if folder already exists
+//       console.error("Error creating videos folder:", err);
+//     }
+//   }
+// }
+
+bot.command("test", async (ctx) => {
+  ctx.reply("Testing message", {
+    reply_to_message_id: ctx.message.message_id,
+  });
 });
 
 module.exports = router;
