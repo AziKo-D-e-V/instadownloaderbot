@@ -14,8 +14,9 @@ const bot = new Bot(token);
 const app = express();
 
 app.get("/health", (req, res) => {
-  res.status(200).send("OK").json({ message: "I'm alive" });
+  res.status(200).send("I'm alive");
 });
+
 app.get("/", (req, res) => {
   res.status(200).send("<b>Bot is alive🎉🥳</b>");
 });
