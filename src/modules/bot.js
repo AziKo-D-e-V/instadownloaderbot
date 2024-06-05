@@ -64,6 +64,7 @@ const text = router.route("text");
 bot.on("message::url", async (ctx) => {
   try {
     const text = ctx.message.text;
+    console.log(text);
     const username = ctx.from?.username || "";
     const user_id = ctx.from.id;
     const chat_id = ctx.chat.id;
@@ -139,7 +140,6 @@ bot.on("message::url", async (ctx) => {
           }
         } else {
           const data = await downloadMedia(text);
-          // console.log(data);
 
           if (data.message) {
             const frm = -1001926273739;

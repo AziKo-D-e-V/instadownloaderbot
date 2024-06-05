@@ -1,11 +1,11 @@
-const express = require('express');
+const express = require("express");
 const config = require("./config");
 const { connect } = require("mongoose");
 const { Bot, session } = require("grammy");
 require("dotenv/config");
 const BotController = require("./modules/bot");
 const commandBot = require("./helper/commands");
-const axios  = require("axios");
+const axios = require("axios");
 const cron = require("node-cron");
 const token = config.TOKEN;
 const port = config.PORT;
@@ -13,8 +13,11 @@ const { hydrateReply } = require("@grammyjs/parse-mode");
 const bot = new Bot(token);
 const app = express();
 
-app.get('/health', (req, res) => {
-  res.status(200).send('OK');
+app.get("/health", (req, res) => {
+  res.status(200).send("OK").json({ message: "I'm alive" });
+});
+app.get("/", (req, res) => {
+  res.status(200).send("<b>Bot is alive🎉🥳</b>");
 });
 
 app.listen(port, () => {
@@ -64,6 +67,6 @@ async function healthCheck() {
 }
 
 bot.command("healthcheck", async (ctx) => {
-  cron.schedule("*/30 * * * * *", healthCheck);
-  ctx.reply("Bot has started and health check is scheduled every 10 seconds.");
+  cron.schedule("*/50 * * * * *", healthCheck);
+  ctx.reply("Bot has started and health check is scheduled every 50 seconds.");
 });
