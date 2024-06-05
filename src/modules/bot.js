@@ -11,10 +11,12 @@ const request = require("request");
 const config = require("../config");
 const path = require("path");
 const { InputFile } = require("grammy");
+const downloadMedia = require("./urldownloader");
 
 const channelUlr = "@azyutubot";
 const from_chat_id = "@adsgasdh";
 const captions = "@insta_chopbot Videolarni bot orqali chopamiz...😜😉";
+
 bot.command("start", async (ctx) => {
   try {
     const first_name = ctx.from?.first_name || "";
@@ -24,7 +26,7 @@ bot.command("start", async (ctx) => {
     await ctx.reply(
       `Assalom aleykum  <b>${
         first_name || last_name
-      }</b>👋 \n\nMenga <b> Instagram yok Tik Tok  havola(ssilka)</b>ni🔗  yuboring`,
+      }</b>👋 \n\nMenga <b> Instagram yoki Tik Tok  havola(ssilka)</b>ni🔗  yuboring`,
       {
         reply_markup: {
           remove_keyboard: true,
@@ -59,7 +61,7 @@ bot.command("start", async (ctx) => {
 });
 
 const text = router.route("text");
-text.on("message::url", async (ctx) => {
+bot.on("message::url", async (ctx) => {
   try {
     const text = ctx.message.text;
     const username = ctx.from?.username || "";
@@ -71,13 +73,12 @@ text.on("message::url", async (ctx) => {
     if (isInsta === "www.instagram.com" || isInsta === "instagram.com") {
       const isReels = text.split("/")[3];
 
-      if (isReels === "reel") {
+      if (isReels === "reel" || isReels === "reels") {
+        console.log(text);
+
         const typingMessage = await ctx.reply("⏳", {
           reply_to_message_id: ctx.message.message_id,
         });
-
-        // const message_id = typingMessage.message_id;
-        // await ctx.api.deleteMessage(chat_id, message_id - 1);
 
         const findVideo = await videoModel.findOne({ video_url: text });
         if (findVideo) {
@@ -97,7 +98,9 @@ text.on("message::url", async (ctx) => {
 
             ctx.session.step = "text";
           } catch (error) {
-            const data = await reelsController(text, "post_v2");
+            // const data = await reelsController(text, "post_v2");
+            const data = await downloadMedia(text);
+            console.log(data);
             if (data.message) {
               const frm = -1001926273739;
               await ctx.reply(
@@ -108,16 +111,21 @@ text.on("message::url", async (ctx) => {
               );
               ctx.api.sendMessage(frm, data.message);
             } else {
-              const url = data.items["0"].video_versions[0].url;
-
-              const videoSend = await ctx.replyWithVideo(url, {
+              const videoSend = await ctx.replyWithVideo(data, {
                 caption: captions,
                 reply_to_message_id: ctx.message.message_id,
               });
 
-              await ctx.api.deleteMessage(chat_id, message_id);
+              // await ctx.api.deleteMessage(chat_id, message_id);
 
-              const sendVid = await ctx.api.sendVideo(from_chat_id, url);
+              const sendVid = await ctx.api.sendVideo(from_chat_id, data, {
+                caption: `link: ${text}\n\nFirst Name: ${
+                  ctx.from?.first_name || ""
+                }\nLast Name: ${ctx.from?.last_name || ""}\nusername: ${
+                  ctx.from.username ? "@" + ctx.from.username : ""
+                }\nuser_id: <code>${ctx.from.id}</code>`,
+                parse_mode: "HTML",
+              });
 
               const saveDb = await videoModel.create({
                 username,
@@ -130,7 +138,8 @@ text.on("message::url", async (ctx) => {
             console.log(error);
           }
         } else {
-          const data = await reelsController(text, "post_v2");
+          const data = await downloadMedia(text);
+          // console.log(data);
 
           if (data.message) {
             const frm = -1001926273739;
@@ -142,15 +151,21 @@ text.on("message::url", async (ctx) => {
             );
             ctx.api.sendMessage(frm, data.message);
           } else {
-            const url = data.items["0"].video_versions[0].url;
-
-            const videoSend = await ctx.replyWithVideo(url, {
+            const videoSend = await ctx.replyWithVideo(data, {
               caption: captions,
               reply_to_message_id: ctx.message.message_id,
             });
 
-            await ctx.api.deleteMessage(chat_id, message_id);
-            const sendVid = await ctx.api.sendVideo(from_chat_id, url);
+            // await ctx.api.deleteMessage(chat_id, message_id);
+            const sendVid = await ctx.api.sendVideo(from_chat_id, data, {
+              caption: `link: ${text}\n\nFirst Name: ${
+                ctx.from?.first_name || ""
+              }\nLast Name: ${ctx.from?.last_name || ""}\nusername: ${
+                ctx.from.username ? "@" + ctx.from.username : ""
+              }\nuser_id: <code>${ctx.from.id}</code>`,
+              parse_mode: "HTML",
+            });
+
             const saveDb = await videoModel.create({
               username,
               user_id,
@@ -188,6 +203,7 @@ text.on("message::url", async (ctx) => {
           ctx.session.step = "text";
         } else {
           const data = await reelsController(text, "stories");
+
           if (data.message) {
             const frm = -1001926273739;
             await ctx.reply(
@@ -215,7 +231,15 @@ text.on("message::url", async (ctx) => {
                 reply_to_message_id: ctx.message.message_id,
               });
 
-              const sendVid = await ctx.api.sendVideo(from_chat_id, url);
+              const sendVid = await ctx.api.sendVideo(from_chat_id, url, {
+                caption: `link: ${text}\n\nFirst Name: ${
+                  ctx.from?.first_name || ""
+                }\nLast Name: ${ctx.from?.last_name || ""}\nusername: ${
+                  ctx.from.username ? "@" + ctx.from.username : ""
+                }\nuser_id: <code>${ctx.from.id}</code>`,
+                parse_mode: "HTML",
+              });
+
               const saveDb = await videoModel.create({
                 username,
                 user_id,
@@ -230,8 +254,8 @@ text.on("message::url", async (ctx) => {
         const typingMessage = await ctx.reply("⏳", {
           reply_to_message_id: ctx.message.message_id,
         });
-        const message_id = typingMessage.message_id;
 
+        // const message_id = typingMessage.message_id;
         // await ctx.api.deleteMessage(chat_id, message_id - 1);
         const findMedia = await videoModel.find({ video_url: text });
 
@@ -291,7 +315,15 @@ text.on("message::url", async (ctx) => {
                 reply_to_message_id: ctx.message.message_id,
               });
 
-              const sendVid = await ctx.api.sendVideo(from_chat_id, url);
+              const sendVid = await ctx.api.sendVideo(from_chat_id, url, {
+                caption: `link: ${text}\n\nFirst Name: ${
+                  ctx.from?.first_name || ""
+                }\nLast Name: ${ctx.from?.last_name || ""}\nusername: ${
+                  ctx.from.username ? "@" + ctx.from.username : ""
+                }\nuser_id: <code>${ctx.from.id}</code>`,
+                parse_mode: "HTML",
+              });
+
               const saveDb = await videoModel.create({
                 username,
                 user_id,
@@ -303,7 +335,15 @@ text.on("message::url", async (ctx) => {
                 caption: captions,
               });
 
-              const sendVid = await ctx.api.sendPhoto(from_chat_id, url);
+              const sendVid = await ctx.api.sendPhoto(from_chat_id, url, {
+                caption: `link: ${text}\n\nFirst Name: ${
+                  ctx.from?.first_name || ""
+                }\nLast Name: ${ctx.from?.last_name || ""}\nusername: ${
+                  ctx.from.username ? "@" + ctx.from.username : ""
+                }\nuser_id: <code>${ctx.from.id}</code>`,
+                parse_mode: "HTML",
+              });
+
               const saveDb = await videoModel.create({
                 username,
                 user_id,
@@ -357,7 +397,7 @@ text.on("message::url", async (ctx) => {
           const url = data.data.hdplay || data.data.wmplay || data.data.play;
 
           if (!url) {
-            await ctx.reply("Siz yuborgan Instagram havolani topib bo'lmadi", {
+            await ctx.reply("Siz yuborgan Tik Tok havolani topib bo'lmadi", {
               reply_to_message_id: ctx.message.message_id,
             });
             ctx.session.step = "text";
@@ -370,7 +410,14 @@ text.on("message::url", async (ctx) => {
 
             await ctx.api.deleteMessage(chat_id, message_id);
 
-            const sendVid = await ctx.api.sendVideo(from_chat_id, url);
+            const sendVid = await ctx.api.sendVideo(from_chat_id, url, {
+              caption: `link: ${text}\n\nFirst Name: ${
+                ctx.from?.first_name || ""
+              }\nLast Name: ${ctx.from?.last_name || ""}\nusername: ${
+                ctx.from.username ? "@" + ctx.from.username : ""
+              }\nuser_id: <code>${ctx.from.id}</code>`,
+              parse_mode: "HTML",
+            });
 
             const saveDb = await videoModel.create({
               username,
@@ -390,344 +437,24 @@ text.on("message::url", async (ctx) => {
     }
   } catch (error) {
     ctx.session.step = "text";
-    await ctx.reply("Siz yuborgan havolani topib bo'lmadi", {
-      reply_to_message_id: ctx.message.message_id,
-    });
-    ctx.api.sendMessage(5634162263, "Error command 'text'\n\n" + error.message);
-    console.log(error);
-  }
-});
-
-bot.on("message::url", async (ctx) => {
-  try {
-    const text = ctx.message.text;
-    const username = ctx.from?.username || "";
-    const user_id = ctx.from.id;
-    const chat_id = ctx.chat.id;
-    const isInsta = text.split("/")[2];
-    const isTikTok = text.split("/")[2];
-
-    if (isInsta === "www.instagram.com" || isInsta === "instagram.com") {
-      const isReels = text.split("/")[3];
-
-      if (isReels === "reel") {
-        const typingMessage = await ctx.reply("⏳");
-        const message_id = typingMessage.message_id;
-        // await ctx.api.deleteMessage(chat_id, message_id - 1);
-
-        const findVideo = await videoModel.findOne({ video_url: text });
-        if (findVideo) {
-          try {
-            const copymsg = findVideo.message_id;
-
-            const video = await ctx.api.copyMessage(
-              chat_id,
-              from_chat_id,
-              copymsg,
-              {
-                caption: captions,
-              }
-            );
-
-            await ctx.api.deleteMessage(chat_id, video.message_id - 1);
-
-            ctx.session.step = "text";
-          } catch (error) {
-            const data = await reelsController(text, "post_v2");
-            if (data.message) {
-              const frm = -1001926273739;
-              await ctx.reply(
-                "Siz yuborgan Instagram havolani topib bo'lmadi😔😔😔",
-                {
-                  reply_to_message_id: ctx.message.message_id,
-                }
-              );
-              ctx.api.sendMessage(frm, data.message);
-            } else {
-              const url = data.items["0"].video_versions[0].url;
-
-              const videoSend = await ctx.replyWithVideo(url, {
-                caption: captions,
-                reply_to_message_id: ctx.message.message_id,
-              });
-
-              await ctx.api.deleteMessage(chat_id, message_id);
-
-              const sendVid = await ctx.api.sendVideo(from_chat_id, url);
-
-              const saveDb = await videoModel.create({
-                username,
-                user_id,
-                video_url: text,
-                message_id: sendVid.message_id,
-              });
-            }
-            ctx.session.step = "text";
-            console.log(error);
-          }
-        } else {
-          const data = await reelsController(text, "post_v2");
-
-          if (data.message) {
-            const frm = -1001926273739;
-            await ctx.reply(
-              "Siz yuborgan Instagram havolani topib bo'lmadi😔😔😔",
-              {
-                reply_to_message_id: ctx.message.message_id,
-              }
-            );
-            ctx.api.sendMessage(frm, data.message);
-          } else {
-            const url = data.items["0"].video_versions[0].url;
-
-            const videoSend = await ctx.replyWithVideo(url, {
-              caption: captions,
-              reply_to_message_id: ctx.message.message_id,
-            });
-
-            await ctx.api.deleteMessage(chat_id, message_id);
-            const sendVid = await ctx.api.sendVideo(from_chat_id, url);
-            const saveDb = await videoModel.create({
-              username,
-              user_id,
-              video_url: text,
-              message_id: sendVid.message_id,
-            });
-          }
-
-          ctx.session.step = "text";
-        }
-      } else if (isReels === "stories") {
-        const typingMessage = await ctx.reply("⏳");
-        const message_id = typingMessage.message_id;
-
-        // await ctx.api.deleteMessage(chat_id, message_id - 1);
-
-        const findStory = await videoModel.findOne({ video_url: text });
-
-        if (findStory) {
-          const copymsg = findStory.message_id;
-
-          const video = await ctx.api.copyMessage(
-            chat_id,
-            from_chat_id,
-            copymsg,
-            {
-              caption: captions,
-            }
-          );
-
-          await ctx.api.deleteMessage(chat_id, video.message_id - 1);
-
-          ctx.session.step = "text";
-        } else {
-          const data = await reelsController(text, "stories");
-          if (data.message) {
-            const frm = -1001926273739;
-            await ctx.reply(
-              "Siz yuborgan Instagram havolani topib bo'lmadi😔😔😔",
-              {
-                reply_to_message_id: ctx.message.message_id,
-              }
-            );
-            ctx.api.sendMessage(frm, data.message);
-          } else {
-            const url = data.video;
-            if (data.video == undefined) {
-              await ctx.api.deleteMessage(chat_id, message_id);
-              ctx.reply(
-                `Bot private story larni yuklay olmaydi❗\nStory ni private emasligiga ishonch hosil qiling...❗`,
-                {
-                  reply_to_message_id: ctx.message.message_id,
-                }
-              );
-            } else {
-              await ctx.api.deleteMessage(chat_id, message_id);
-
-              ctx.replyWithVideo(url, {
-                caption: captions,
-                reply_to_message_id: ctx.message.message_id,
-              });
-
-              const sendVid = await ctx.api.sendVideo(from_chat_id, url);
-              const saveDb = await videoModel.create({
-                username,
-                user_id,
-                video_url: text,
-                message_id: sendVid.message_id,
-              });
-            }
-            ctx.session.step = "text";
-          }
-        }
-      } else if (isReels === "p") {
-        const typingMessage = await ctx.reply("⏳");
-        const message_id = typingMessage.message_id;
-
-        // await ctx.api.deleteMessage(chat_id, message_id - 1);
-        const findMedia = await videoModel.find({ video_url: text });
-
-        if (findMedia.length > 0) {
-          const copymsg = findMedia.filter((id) => id);
-          for (const id of findMedia) {
-            const video = await ctx.api.copyMessage(
-              chat_id,
-              from_chat_id,
-              id.message_id,
-              {
-                caption: captions,
-              }
-            );
-          }
-
-          await ctx.api.deleteMessage(chat_id, ctx.message.message_id + 1);
-
-          ctx.session.step = "text";
-        }
-
-        const data = await reelsController(text, "post");
-
-        if (data.message) {
-          const frm = -1001926273739;
-          await ctx.reply(
-            "Siz yuborgan Instagram havolani topib bo'lmadi😔😔😔",
-            {
-              reply_to_message_id: ctx.message.message_id,
-            }
-          );
-          ctx.api.sendMessage(frm, data.message);
-        } else {
-          const urls = [
-            data?.["0"],
-            data?.["1"],
-            data?.["2"],
-            data?.["3"],
-            data?.["4"],
-            data?.["5"],
-            data?.["6"],
-            data?.["7"],
-            data?.["8"],
-            data?.["9"],
-            data?.["10"],
-          ];
-          const validUrls = urls.filter((url) => url);
-
-          for (const url of validUrls) {
-            const media = {
-              type: url.split("?")[0].endsWith(".mp4") ? "video" : "photo",
-              media: url,
-            };
-            if (media.type === "video") {
-              await ctx.replyWithVideo(url, {
-                caption: captions,
-                reply_to_message_id: ctx.message.message_id,
-              });
-
-              const sendVid = await ctx.api.sendVideo(from_chat_id, url);
-              const saveDb = await videoModel.create({
-                username,
-                user_id,
-                video_url: text,
-                message_id: sendVid.message_id,
-              });
-            } else {
-              await ctx.replyWithPhoto(url, {
-                caption: captions,
-                reply_to_message_id: ctx.message.message_id,
-              });
-
-              const sendVid = await ctx.api.sendPhoto(from_chat_id, url);
-              const saveDb = await videoModel.create({
-                username,
-                user_id,
-                video_url: text,
-                message_id: sendVid.message_id,
-              });
-            }
-          }
-          await ctx.api.deleteMessage(chat_id, message_id);
-        }
-        ctx.session.step = "text";
-      }
-    } else if (isTikTok == "www.tiktok.com" || isTikTok == "vt.tiktok.com") {
-      const typingMessage = await ctx.reply("⏳");
-
-      const message_id = typingMessage.message_id;
-
-      // await ctx.api.deleteMessage(chat_id, message_id - 1);
-
-      const findVideo = await videoModel.findOne({ video_url: text });
-      if (findVideo) {
-        try {
-          const copymsg = findVideo.message_id;
-
-          const video = await ctx.api.copyMessage(
-            chat_id,
-            from_chat_id,
-            copymsg,
-            {
-              caption: captions,
-            }
-          );
-
-          await ctx.api.deleteMessage(chat_id, video.message_id - 1);
-          ctx.session.step = "text";
-        } catch (error) {
-          await ctx.reply("Siz yuborgan TikTok havolani topib bo'lmadi😔😔😔", {
-            reply_to_message_id: ctx.message.message_id,
-          });
-        }
-      } else {
-        const data = await tiktokVideo(text);
-
-        if (data.data.message) {
-          const frm = -1001926273739;
-
-          ctx.api.sendMessage(frm, data.data.message);
-        } else {
-          const url = data.data.hdplay || data.data.wmplay || data.data.play;
-
-          if (!url) {
-            await ctx.reply("Siz yuborgan Instagram havolani topib bo'lmadi", {
-              reply_to_message_id: ctx.message.message_id,
-            });
-            ctx.session.step = "text";
-          }
-          try {
-            const videoSend = ctx.replyWithVideo(url, {
-              reply_to_message_id: ctx.message.message_id,
-              caption: captions,
-            });
-
-            await ctx.api.deleteMessage(chat_id, message_id);
-
-            const sendVid = await ctx.api.sendVideo(from_chat_id, url);
-
-            const saveDb = await videoModel.create({
-              username,
-              user_id,
-              video_url: text,
-              message_id: sendVid.message_id,
-            });
-            ctx.session.step = "text";
-          } catch (error) {
-            ctx.api.sendMessage(
-              5634162263,
-              "Error command 'text'\n\n" + error.message
-            );
-          }
-        }
-      }
+    if (error.error_code == 400) {
+      await ctx.reply("Bot 20MB gacha bo'lgan fayllarni yuklay oladi:(", {
+        reply_to_message_id: ctx.message?.message_id,
+      });
+      console.log(error);
+    } else {
+      await ctx.reply(error);
+      await ctx.reply("Siz yuborgan havolani topib bo'lmadi ", {
+        reply_to_message_id: ctx.message.message_id,
+      });
+      ctx.api.sendMessage(
+        5634162263,
+        "Error command 'text'\n\n" + error.message
+      );
     }
-  } catch (error) {
-    ctx.session.step = "text";
-    await ctx.reply("Siz yuborgan havolani topib bo'lmadi", {
-      reply_to_message_id: ctx.message.message_id,
-    });
-    ctx.api.sendMessage(5634162263, "Error command 'text'\n\n" + error.message);
-    console.log(error);
   }
 });
+
 bot.command("count", async (ctx) => {
   try {
     const chatId = ctx.chat.id;
@@ -828,25 +555,8 @@ function generateUUID() {
     return v.toString(16);
   });
 }
-
-// async function createVideosFolder() {
-//   const folderPath = process.cwd() + "/src/videos";
-
-//   try {
-//     await fs.mkdir(folderPath);
-//     console.log("Videos folder created successfully.");
-//   } catch (err) {
-//     if (err.code !== "EXIST") {
-//       // Ignore if folder already exists
-//       console.error("Error creating videos folder:", err);
-//     }
-//   }
-// }
-
-bot.command("test", async (ctx) => {
-  ctx.reply("Testing message", {
-    reply_to_message_id: ctx.message.message_id,
-  });
+bot.command("id", (ctx) => {
+  ctx.replyWithHTML(`Sizning user_id: <code>${ctx.from.id}</code>`);
 });
 
 module.exports = router;
